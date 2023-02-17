@@ -1,23 +1,27 @@
-// Import dependencies
 import React, { useRef, useState, useEffect } from "react";
 import * as tf from "@tensorflow/tfjs";
-// 1. TODO - Import required model here
-// e.g. import * as tfmodel from "@tensorflow-models/tfmodel";
+import * as cocossd from '@tensorflow-models/coco-ssd'
 import Webcam from "react-webcam";
-import "./App.css";
-// 2. TODO - Import drawing utility here
-// e.g. import { drawRect } from "./utilities";
+import { drawRect } from "./utilities";
+import Home from "./Pages/Home";
+import Header from "./Pages/Header";
+import Footer from "./Pages/Footer";
+import LiveCamInfoCard from "./Pages/LiveCamInfoCard";
+import VideoPlayer from "./Pages/VideoPlayer";
+import Reviews from "./Pages/Reviews";
+import ContactUs from "./Pages/ContactUs";
 
 function App() {
+
+  const [showCam, setShowCam] = useState(false);
+  const [showLocalFile, setShowLocalFile] = useState(false);
+
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
 
   // Main function
   const runCoco = async () => {
-    // 3. TODO - Load network 
-    // e.g. const net = await cocossd.load();
-    
-    //  Loop and detect hands
+    const net = await cocossd.load();
     setInterval(() => {
       detect(net);
     }, 10);
@@ -43,53 +47,72 @@ function App() {
       canvasRef.current.width = videoWidth;
       canvasRef.current.height = videoHeight;
 
-      // 4. TODO - Make Detections
-      // e.g. const obj = await net.detect(video);
+      const obj = await net.detect(video);
+      // console.log(obj)
 
       // Draw mesh
       const ctx = canvasRef.current.getContext("2d");
-
-      // 5. TODO - Update drawing utility
-      // drawSomething(obj, ctx)  
+      drawRect(obj, ctx)
+      tf.dispose(obj);
     }
   };
 
-  useEffect(()=>{runCoco()},[]);
+  useEffect(() => { runCoco() }, []);
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <Webcam
-          ref={webcamRef}
-          muted={true} 
-          style={{
-            position: "absolute",
-            marginLeft: "auto",
-            marginRight: "auto",
-            left: 0,
-            right: 0,
-            textAlign: "center",
-            zindex: 9,
-            width: 640,
-            height: 480,
-          }}
-        />
-
-        <canvas
-          ref={canvasRef}
-          style={{
-            position: "absolute",
-            marginLeft: "auto",
-            marginRight: "auto",
-            left: 0,
-            right: 0,
-            textAlign: "center",
-            zindex: 8,
-            width: 640,
-            height: 480,
-          }}
-        />
+    <div >
+      <header >
+        <Header />
       </header>
+      <main className="min-h-screen">
+        <Home
+          showCam={showCam}
+          setShowCam={setShowCam}
+          setShowLocalFile={setShowLocalFile}
+        />
+        {
+          showCam &&
+          <div className="max-w-screen-xl w-full grid grid-cols-1 lg:grid-cols-2 h-full justify-center mx-auto">
+            <LiveCamInfoCard
+              setShowCam={setShowCam}
+            />
+            <div className="relative mt-5 lg:mt-0 h-[500px]">
+              <Webcam
+                ref={webcamRef}
+                muted={true}
+                className="mx-auto border-2 border-gray-400 rounded-lg text-center w-[400px] h-[300] md:w-[500px] md:h-[400] lg:w-[550px] lg:h-[420px] xl:w-[858] xl:h-[480] shadow-lg"
+                style={{
+                  zindex: 9,
+                  position: 'absolute',
+                  top: '210px',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)'
+                }}
+              />
+              <canvas
+                ref={canvasRef}
+                className="mx-auto border-2 border-gray-400 rounded-lg text-center w-[400px] h-[300] md:w-[500px] md:h-[400] lg:w-[550px] lg:h-[420px] xl:w-[858] xl:h-[480] shadow-lg"
+                style={{
+                  zindex: 8,
+                  position: 'absolute',
+                  top: '210px',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)'
+                }}
+              />
+            </div>
+          </div>
+        }
+        {
+          showLocalFile &&
+          <VideoPlayer
+            setShowLocalFile={setShowLocalFile}
+          />
+        }
+        <Reviews />
+        <ContactUs />
+      </main>
+      <Footer />
     </div>
   );
 }
